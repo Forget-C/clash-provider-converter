@@ -1,0 +1,61 @@
+proxy-providers:
+  server1:
+    type: file
+    path: ./test1.yaml
+    health-check:
+      enable: true
+      interval: 36000
+      url: http://www.gstatic.com/generate_204
+  server2:
+    type: file
+    path: ./test2.yaml
+    health-check:
+      enable: true
+      interval: 36000
+      url: http://www.gstatic.com/generate_204
+
+proxy-groups:
+  - name: 'auto'
+    type: url-test
+    interval: 300
+    url: "https://www.google.com"
+    use:
+      - server1
+      - server2
+
+  - name: Proxy1
+    type: select
+    proxies:
+      - 'auto'
+    use:
+      - server1
+      - server2
+
+  - name: AppleProxy
+    type: select
+    proxies:
+      - 'DIRECT'
+      - 'auto'
+    use:
+      - server1
+      - server2
+
+rule-providers:
+  proxy-domain:
+    type: file
+    behavior: domain
+    # url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt
+    interval: 86400
+    path: ./rule_proxy.yaml
+  apple-direct:
+    type: file
+    behavior: domain
+    # url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt
+    interval: 3600
+    path: ./rule_apple.yaml
+
+rules:
+  - RULE-SET,proxy-domain,Proxy1
+  - RULE-SET,apple-direct,AppleProxy
+  - GEOIP,CN,DIRECT
+  - MATCH,Proxy1
